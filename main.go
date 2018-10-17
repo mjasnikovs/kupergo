@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -33,31 +34,35 @@ func main() {
 
 	fmt.Printf("Using %s:%s \n", ip, port)
 
-	conn, err := net.Dial("tcp", ip+":"+port)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
 	for {
-		messageReader := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter message: ")
-		messageString, _ := messageReader.ReadString('\n')
+		conn, err := net.Dial("tcp", ip+":"+port)
+		if err != nil {
+			fmt.Println(err)
+			time.Sleep(2)
+			continue
+		}
 
-		message := strings.TrimSpace(messageString)
+		fmt.Printf("Connected %s:%s\n", ip, port)
 
-		if message != "" {
-			conn.Write([]byte("**" + message + "**"))
-			conn.Write([]byte("\r\n"))
+		for {
+			messageReader := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter message: ")
+			messageString, _ := messageReader.ReadString('\n')
 
-			fmt.Printf("Send: %s\n", "**"+message+"**")
+			message := strings.TrimSpace(messageString)
 
-			buff := make([]byte, 1024)
-			n, _ := conn.Read(buff)
-			log.Printf("Receive: %s", buff[:n])
-		} else {
-			fmt.Printf("Error: %s\n", "Can't send empty message")
+			if message != "" {
+				conn.Write([]byte("**" + message + "**"))
+				conn.Write([]byte("\r\n"))
+
+				fmt.Printf("Send: %s\n", "**"+message+"**")
+
+				buff := make([]byte, 1024)
+				n, _ := conn.Read(buff)
+				log.Printf("Receive: %s", buff[:n])
+			} else {
+				fmt.Printf("Error: %s\n", "Can't send empty message")
+			}
 		}
 	}
 }
